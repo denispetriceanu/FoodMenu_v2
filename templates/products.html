@@ -45,36 +45,50 @@
             $("#name").val("");
             $("#description").val("");
             $("#price").val("");
+            $("#category").val("");
             $("#addEditButton").text("Inserează");
             $("#addEditButton").attr("onclick", "AddProduct()");
         }
 
         function AddProduct() {
-            let time, name, description, price;
+            let time, name, description, price, category;
             time = Date.now();
             name = $("#name").val();
+            category = $("#category").val();
             description = $("#description").val();
             price = $("#price").val();
-
-            $.ajax({
-                type: "POST",
-                url: "/addProduct",
-                data: { "time": time, "name": name, "description": description, "price": price },
-                success: function (data) {
-                    $("#success").text("Adaugat cu succes!")
-                    $("#success").css("display", "flex");
-                    if (data["message"] == "true") {
-                        setTimeout(() => {
-                            $("#success").css("display", "none");
-                        }, 2000)
-                        getAllProduct();
-                        resetForms();
-                    };
-                },
-                error: function (errMsg) {
-                    console.log(errMsg);
-                }
-            });
+            if (category == "") {
+                $("#danger").text("Selecteaza o categorie!")
+                $("#danger").css("display", "flex");
+                setTimeout(() => {
+                    $("#danger").css("display", "none");
+                }, 3000)
+            } else
+                $.ajax({
+                    type: "POST",
+                    url: "/addProduct",
+                    data: { "time": time, "name": name, "description": description, "price": price, "category": category },
+                    success: function (data) {
+                        if (data["message"] == "true") {
+                            $("#success").text("Adaugat cu succes!")
+                            $("#success").css("display", "flex");
+                            setTimeout(() => {
+                                $("#success").css("display", "none");
+                            }, 2000)
+                            getAllProduct();
+                            resetForms();
+                        } else {
+                            $("#danger").text("Eroare: " + data["message"])
+                            $("#danger").css("display", "flex");
+                            setTimeout(() => {
+                                $("#danger").css("display", "none");
+                            }, 3000)
+                        }
+                    },
+                    error: function (errMsg) {
+                        console.log(errMsg);
+                    }
+                });
         }
 
         function getAllProduct() {
@@ -94,7 +108,7 @@
                             htmlCode +=
                                 "<tr> <th scope='row'>" + (i + 1) + "</th> <td>" + childValue[i]["name"]
                                 + "</td><td> <button class='btn specialButton' onclick='ShowModal(`" + childValue[i]["name"] + "`, `" + childValue[i]["description"] + "`)'>Citește</button></td><td>" +
-                                childValue[i]["price"] + "</td><td><img src='IMG/delete_icon.png' width='20px' onclick=deleteProduct('" + childKey[i] + "')" +
+                                childValue[i]["price"] + "</td><td>" + childValue[i]["category"] + "</td><td><img src='IMG/delete_icon.png' width='20px' onclick=deleteProduct('" + childKey[i] + "')" +
                                 " style='margin-right: 20px; cursor: pointer'><img src='IMG/edit_icon.png' style='cursor: pointer' onclick=editProduct('" + childKey[i] + "') width = '20px'></td></tr >"
                                 ;
                         }
@@ -141,6 +155,9 @@
                     $("#name").val(data["name"]);
                     $("#description").val(data["description"]);
                     $("#price").val(data["price"]);
+                    $("#category").val(data["category"]).change();
+                    // $("#category").val("drinks").change();
+
                 },
                 error: function (errMsg) {
                     console.log(errMsg);
@@ -149,16 +166,16 @@
         }
 
         function makeChanges() {
-            let time, name, description, price;
+            let time, name, description, price, category;
             time = Date.now();
             name = $("#name").val();
             description = $("#description").val();
             price = $("#price").val();
-
+            category = $("#category").val()
             $.ajax({
                 type: "POST",
                 url: "/editProduct",
-                data: { "time": time, "name": name, "description": description, "price": price, "id": store_id },
+                data: { "time": time, "name": name, "description": description, "price": price, "id": store_id, "category": category },
                 success: function (data) {
                     $("#success").text("Editat cu succes!")
                     $("#success").css("display", "flex");
@@ -215,6 +232,18 @@
                     </div>
 
                     <div class="form-group">
+                        <label for="category">Categorie produs</label>
+                        <select class="form-select"
+                                id="category">
+                            <option selected>Alege o categorie</option>
+                            <option value="entrees">Entrees</option>
+                            <option value="mainDishes">Main dishes</option>
+                            <option value="desserts">Desserts</option>
+                            <option value="drinks">Drinks</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
                         <label for="price">Prețul afișat</label>
                         <input type="number"
                                class="form-control"
@@ -256,6 +285,7 @@
                             <th scope="col">Nume produs</th>
                             <th scope="col">Descriere</th>
                             <th scope="col">Pret</th>
+                            <th scope="col">Categorie</th>
                             <th scope="col"><img src="IMG/settings-icon.png"
                                      height="20px"></th>
                         </tr>
@@ -272,6 +302,7 @@
                                     Citește
                                 </button>
                             </td>
+                            <td>Consectetur</td>
                             <td>Consectetur</td>
                             <td>
                                 <img src="IMG/delete_icon.png"
@@ -320,7 +351,7 @@
 
 
     <script>
-        getAllProduct()
+        getAllProduct();
     </script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>

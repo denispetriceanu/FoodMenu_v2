@@ -19,6 +19,7 @@ const productOperations = {
       description: obj["description"],
       price: obj["price"],
       time: obj["time"],
+      category: obj["category"],
     };
     startReference
       .ref("FoodOptions")
@@ -35,6 +36,7 @@ const productOperations = {
       description: obj["description"],
       price: obj["price"],
       time: obj["time"],
+      category: obj["category"],
     };
     startReference
       .ref("FoodOptions")
