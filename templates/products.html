@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible"
+          content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Food Menu</title>
+
+    <!-- JQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
+          crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+            crossorigin="anonymous"></script>
+    <!-- CSS -->
+    <link rel="stylesheet"
+          type="text/css"
+          href="./CSS/style.css" />
+    <link rel="stylesheet"
+          href="./CSS/modal.css">
+    <!-- JS -->
+    <script src="./JS/modal.js"></script>
+
+    <style>
+        .form-group {
+            margin-top: 10px;
+        }
+
+        #img_login {
+            height: 100%;
+        }
+    </style>
+
+    <script>
+        let store_id = "";
+
+        function resetForms() {
+            $("#name").val("");
+            $("#description").val("");
+            $("#price").val("");
+            $("#addEditButton").text("Inserează");
+            $("#addEditButton").attr("onclick", "AddProduct()");
+        }
+
+        function AddProduct() {
+            let time, name, description, price;
+            time = Date.now();
+            name = $("#name").val();
+            description = $("#description").val();
+            price = $("#price").val();
+
+            $.ajax({
+                type: "POST",
+                url: "/addProduct",
+                data: { "time": time, "name": name, "description": description, "price": price },
+                success: function (data) {
+                    $("#success").text("Adaugat cu succes!")
+                    $("#success").css("display", "flex");
+                    if (data["message"] == "true") {
+                        setTimeout(() => {
+                            $("#success").css("display", "none");
+                        }, 2000)
+                        getAllProduct();
+                        resetForms();
+                    };
+                },
+                error: function (errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+
+        function getAllProduct() {
+            let htmlCode = "";
+            $.ajax({
+                type: "GET",
+                url: "/getProducts",
+                data: { "reference": "FoodOptions" },
+                success: function (data) {
+                    if (data["childKey"] == null || data["childData"] == null) {
+                        htmlCode = "<tr><td></td><td style='font-size:12px'>Nici un produs</td><td></td><td></td><td></td></tr>";
+                        console.log(htmlCode);
+                    } else {
+                        let childKey = Object.values(data["childKey"]);
+                        let childValue = Object.values(data["childData"]);
+                        for (var i = 0; i < childKey.length; i++) {
+                            htmlCode +=
+                                "<tr> <th scope='row'>" + (i + 1) + "</th> <td>" + childValue[i]["name"]
+                                + "</td><td> <button class='btn specialButton' onclick='ShowModal(`" + childValue[i]["name"] + "`, `" + childValue[i]["description"] + "`)'>Citește</button></td><td>" +
+                                childValue[i]["price"] + "</td><td><img src='IMG/delete_icon.png' width='20px' onclick=deleteProduct('" + childKey[i] + "')" +
+                                " style='margin-right: 20px; cursor: pointer'><img src='IMG/edit_icon.png' style='cursor: pointer' onclick=editProduct('" + childKey[i] + "') width = '20px'></td></tr >"
+                                ;
+                        }
+                    }
+                    $("#appendData").html(htmlCode);
+                },
+                error: function (errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+
+        function deleteProduct(id) {
+            let text = "Esti sigur ca doresti sa stergi produsul?";
+            if (confirm(text) == true) {
+                console.log(id);
+                $.ajax({
+                    type: "GET",
+                    url: "/deleteProduct",
+                    data: { "id": id },
+                    success: function (data) {
+                        if (data["message"] == "true") {
+                            getAllProduct();
+                        };
+                    },
+                    error: function (errMsg) {
+                        console.log(errMsg);
+                    }
+                });
+            }
+        }
+
+        function editProduct(id) {
+            console.log("Changes: ", id);
+            store_id = id;
+            $("#addEditButton").text("Editează");
+            $("#addEditButton").attr("onclick", "makeChanges()");
+
+            $.ajax({
+                type: "GET",
+                url: "/getProduct",
+                data: { "id": id },
+                success: function (data) {
+                    $("#name").val(data["name"]);
+                    $("#description").val(data["description"]);
+                    $("#price").val(data["price"]);
+                },
+                error: function (errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+
+        function makeChanges() {
+            let time, name, description, price;
+            time = Date.now();
+            name = $("#name").val();
+            description = $("#description").val();
+            price = $("#price").val();
+
+            $.ajax({
+                type: "POST",
+                url: "/editProduct",
+                data: { "time": time, "name": name, "description": description, "price": price, "id": store_id },
+                success: function (data) {
+                    $("#success").text("Editat cu succes!")
+                    $("#success").css("display", "flex");
+                    if (data["message"] == "true") {
+                        setTimeout(() => {
+                            $("#success").css("display", "none");
+                        }, 2000)
+                        getAllProduct();
+                        resetForms();
+                    };
+                },
+                error: function (errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <blockquote class="blockquote text-center"
+                    style="font-size: 30px; margin-top: 30px;">
+            <p class="mb-2">Welcome to Food Menu!</p>
+            <footer class="blockquote-footer"><cite title="Food Menu">Administrarea produselor din meniuri</cite>
+            </footer>
+        </blockquote>
+
+
+        <div class="row"
+             style="margin-top: 30px">
+            <div class="col-md-6">
+                <h3>Adaugă produs</h3>
+                <form>
+                    <div class="form-group">
+                        <label for="name">Numele produsului</label>
+                        <input type="text"
+                               class="form-control"
+                               id="name"
+                               aria-describedby="name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Descriere</label>
+                        <textarea type="text"
+                                  class="form-control"
+                                  id="description"
+                                  placeholder="Descriere detaliata a produselor"
+                                  rows="5"></textarea>
+                        <small id="emailHelp"
+                               class="form-text text-muted">Trebuie adăugate informații cât mai precise și detaliate,
+                            conform noilor reglementări, cu privire la produsele folosite la realizarea
+                            produsulu.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="price">Prețul afișat</label>
+                        <input type="number"
+                               class="form-control"
+                               id="price"
+                               aria-describedby="price">
+                        <small id="price"
+                               class="form-text text-muted">Prețul exprimat în lei.</small>
+                    </div>
+
+                    <button type="button"
+                            id="addEditButton"
+                            style="margin-top:20px; margin-bottom: 30px;"
+                            class="btn btn-success primaryButton"
+                            onclick='AddProduct()'>Inserează</button>
+                </form>
+
+                <div id="alertclass">
+                    <div id="danger"
+                         class="alert alert-danger">
+                        <img src="IMG/attention.png"
+                             width="20px">
+                        <p>Something went wrong!</p>
+                    </div>
+                    <div id="success"
+                         class="alert alert-success">
+                        <img src="IMG/check_icon.png"
+                             width="25px">
+                        <p>Success!</p>
+                    </div>
+                </div>
+
+                <hr>
+            </div>
+            <div class="col-md-6">
+                <table class="table ">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Nume produs</th>
+                            <th scope="col">Descriere</th>
+                            <th scope="col">Pret</th>
+                            <th scope="col"><img src="IMG/settings-icon.png"
+                                     height="20px"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="appendData">
+                        <!-- <tr>
+                            <th scope="row">1</th>
+                            <td>Sit</td>
+                            <td>
+                                Button trigger modal
+                                <button type="button"
+                                        class="btn specialButton"
+                                        onclick="ShowModal()">
+                                    Citește
+                                </button>
+                            </td>
+                            <td>Consectetur</td>
+                            <td>
+                                <img src="IMG/delete_icon.png"
+                                     width="20px"
+                                     style="margin-right: 20px; cursor: pointer"
+                                     alt="">
+                                <img src="IMG/edit_icon.png"
+                                     style=" cursor: pointer"
+                                     width="20px"
+                                     alt="">
+                            </td>
+                        </tr> -->
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- The Modal -->
+    <div id="myModal"
+         class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+            <span onclick="HideModal();"
+                  style="margin-left: auto; font-size:30px; margin-bottom: -40px; cursor: pointer; z-index: 100;">&times;</span>
+
+            <div class="modal-header">
+                <p id="modalTitle">Here will be the name</p>
+            </div>
+            <div class="modal-body">
+                <p id="modalDescription">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptatibus,
+                    perspiciatis laborum. Debitis velit, a fugit ullam placeat totam nam odio? Illo voluptatibus iure
+                    eum?
+                </p>
+            </div>
+            <div class="modal-footer"></div>
+            <span class="close"></span>
+        </div>
+
+    </div>
+
+
+
+    <script>
+        getAllProduct()
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+</body>
+
+</html>

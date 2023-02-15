@@ -1,0 +1,65 @@
+:root {
+    --custom_red: #d60a1f;
+    --custom_gray: #5d6d75;
+    --custom_blue: #1068d2;
+    --custom_green: #0f7868;
+}
+
+.primaryButton {
+    width: 200px;
+    text-align: center;
+    border-radius: 15px;
+    background-color: var(--custom_green);
+}
+
+.secondaryButton {
+    width: 200px;
+    text-align: center;
+    border-radius: 15px;
+    background-color: var(--custom_blue);
+}
+
+.thirtyButton {
+    width: 200px;
+    text-align: center;
+    border-radius: 15px;
+    background-color: var(--custom_gray);
+}
+
+.specialButton {
+    width: 70px;
+    height: 20px;
+    padding: 0px;
+    font-size: 12px;
+    background-color: var(--custom_red);
+    color: white;
+}
+
+.specialButton:hover {
+    background-color: rgb(170, 6, 6);
+    color: white;
+    border: 1px solid black;
+}
+
+
+#danger,
+#success {
+    display: flex;
+    padding: 5px;
+    text-align: center;
+    display: none;
+}
+
+#danger img,
+#success img {
+    margin-right: 10px;
+    height: 100%;
+    margin-top: auto;
+    margin-bottom: auto;
+}
+
+#danger p,
+#success p {
+    margin-top: auto;
+    margin-bottom: auto;
+}

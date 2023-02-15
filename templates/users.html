@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible"
+          content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Food Menu</title>
+
+    <!-- JQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
+          crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+            crossorigin="anonymous"></script>
+    <!-- CSS -->
+    <link rel="stylesheet"
+          href="CSS/style.css">
+
+    <style>
+        #img_login {
+            height: 100%;
+        }
+    </style>
+    <script>
+        let store_id = "";
+
+        function resetForms() {
+            $("#name").val("");
+            $("#password").val("");
+            $("#confirmPassword").val("");
+            $("#dateBirthDate").val("");
+            $("#email").val("");
+            $("#function").val("");
+
+            $("#addEditButton").text("Inserează");
+            $("#addEditButton").attr("onclick", "addUser()");
+            $("#divPassword").css("display", "block");
+            $("#divConfirmPwd").css("display", "block");
+        }
+
+        function addUser() {
+            let time, name, password, confirmPassword, email, birthDate, functionName;
+            time = Date.now();
+            name = $("#name").val();
+            password = $("#password").val();
+            confirmPassword = $("#confirmPassword").val();
+            email = $("#email").val();
+            birthDate = String($("#dateBirthDate").val());
+            functionName = $("#function").val();
+
+            $.ajax({
+                type: "POST",
+                url: "/addUser",
+                data: {
+                    "time": time, "name": name, "password": password,
+                    "confirmPassword": confirmPassword, "email": email, "birthday": birthDate, "function": functionName
+                },
+                success: function (data) {
+                    if (data["message"] == "true") {
+                        $("#success").text("Adaugat cu succes!")
+                        $("#success").css("display", "flex");
+                        setTimeout(() => {
+                            $("#success").css("display", "none");
+                        }, 2000)
+                        getAllUsers();
+                        resetForms();
+                    } else {
+                        $("#danger").text("Eroare: " + data["message"])
+                        $("#danger").css("display", "flex");
+                        setTimeout(() => {
+                            $("#danger").css("display", "none");
+                        }, 3000)
+                    }
+                },
+                error: function (errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+
+        function getAllUsers() {
+            let htmlCode = "";
+            $.ajax({
+                type: "GET",
+                url: "/getProducts",
+                data: { "reference": "Users" },
+                success: function (data) {
+                    if (data["childKey"] == null || data["childData"] == null) {
+                        htmlCode = "<tr><td></td><td style='font-size:12px'>Nici un utilizator</td><td></td><td></td><td></td></tr>";
+                    } else {
+                        let childKey = Object.values(data["childKey"]);
+                        let childValue = Object.values(data["childData"]);
+
+                        for (var i = 0; i < childKey.length; i++) {
+                            htmlCode += "<tr> <th scope='row'>" + (i + 1) + "</th> <td>" +
+                                childValue[i]["name"] + "</td><td>" + childValue[i]["email"] + "</td><td>"
+                                + childValue[i]["function"] + "</td><td style='display:flex;'><img src='IMG/remove_user.png' width='30px' onclick=deleteUser(`" + childKey[i] + "`)"
+                                + " style='margin-right: 20px; cursor: pointer'><img src='IMG/edit_icon.png' style='cursor: pointer' onclick=editUser('"
+                                + childKey[i] + "') width = '20px'></td></tr >";
+                        }
+                        // <img src='IMG/resset_pwd.png' style='cursor: pointer' onclick=resetPwd('"
+                        // + childKey[i] + "') width = '20px'>
+                    }
+                    $("#appendData").html(htmlCode);
+                },
+                error:
+                    function
+                        (errMsg) {
+                        console.log(errMsg);
+                    }
+            });
+        }
+
+        function deleteUser(id) {
+            let text = "Esti sigur ca doresti sa stergi produsul?";
+            if (confirm(text) == true) {
+                console.log(id);
+                $.ajax({
+                    type: "GET",
+                    url: "/deleteUser",
+                    data: {
+                        "id": id
+                    },
+                    success:
+                        function (data) {
+                            if (data["message"] == "true") {
+                                getAllUsers();
+                            };
+                        },
+                    error:
+                        function (errMsg) {
+                            console.log(errMsg);
+                        }
+                });
+            }
+        }
+
+        // function resetPwd(id) {
+        //     $.ajax({
+        //         type: "GET",
+        //         url: "/resetPwd",
+        //         data: { "id": id },
+        //         success: function (data) {
+        //             if (data["message"] == "true") {
+        //                 alert("Parola a fost resetata!");
+        //             } else {
+        //                 alert("Eroare: " + data["message"]);
+        //             }
+        //         }, error: function (errMsg) {
+        //             console.log(errMsg);
+        //         }
+        //     });
+        // }
+
+        function editUser(id) {
+            console.log("Changes: ", id);
+            store_id = id;
+            $("#addEditButton").text("Editează");
+            $("#addEditButton").attr("onclick", "makeChanges()");
+            $("#divPassword").css("display", "none");
+            $("#divConfirmPwd").css("display", "none");
+
+            $.ajax({
+                type: "GET",
+                url: "/getUser",
+                data: { "id": id },
+                success: function (data) {
+                    $("#name").val(data["name"]);
+                    $("#dateBirthDate").val(data["birthday"]);
+                    $("#email").val(data["email"]);
+                    $("#function").val(data["function"]);
+                }, error: function (errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+
+        function makeChanges() {
+            let time, name, email, birthDate, functionName;
+            time = Date.now();
+            name = $("#name").val();
+            email = $("#email").val();
+            birthDate = String($("#dateBirthDate").val());
+            functionName = $("#function").val();
+
+
+            $.ajax({
+                type: "POST",
+                url: "/editUser",
+                data: {
+                    "time": time,
+                    "name": name,
+                    "email": email,
+                    "birthday": birthDate,
+                    "function": functionName,
+                    "id": store_id
+                },
+                success: function (data) {
+                    if (data["message"] == "true") {
+                        $("#success").text("Editat cu succes!")
+                        $("#success").css("display", "flex");
+                        setTimeout(() => {
+                            $("#success").css("display", "none");
+                        }, 2000)
+                        getAllUsers();
+                        resetForms();
+                    } else {
+                        $("#danger").text("Eroare: " + data["message"])
+                        $("#danger").css("display", "flex");
+                        setTimeout(() => {
+                            $("#danger").css("display", "none");
+                        }, 3000)
+                    }
+                },
+                error: function (errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <blockquote class="blockquote text-center"
+                    style="font-size: 30px; margin-top: 30px;">
+            <p class="mb-2">Welcome to Food Menu!</p>
+            <footer class="blockquote-footer"><cite title="Food Menu">Administrarea utilizatorilor</cite>
+            </footer>
+        </blockquote>
+
+
+        <div class="row"
+             style="margin-top: 30px">
+            <div class="col-md-6">
+                <h3>Adaugă utilizator</h3>
+                <form>
+                    <div class="form-group">
+                        <label for="name">Numele utilizatorului</label>
+                        <input type="text"
+                               class="form-control"
+                               id="name">
+                    </div>
+                    <div class="form-group"
+                         id="divPassword">
+                        <label for="password">Parolă</label>
+                        <input type="password"
+                               class="form-control"
+                               id="password">
+                    </div>
+                    <div class="form-group"
+                         id="divConfirmPwd">
+                        <label for="confirmPassword">Confirmare parolă</label>
+                        <input type="password"
+                               class="form-control"
+                               id="confirmPassword">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dateBirthDate">Data nașterii</label>
+                        <input type="date"
+                               class="form-control"
+                               id="dateBirthDate">
+                        <small id="dateBirthDate"
+                               class="form-text text-muted">Nu va fi publicată.</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="function">Funcție</label>
+                        <input type="text"
+                               class="form-control"
+                               id="function">
+                        <small id="function"
+                               class="form-text text-muted">Opțiuni: chelner, barman, bucatar, administrator</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email"
+                               class="form-control"
+                               id="email">
+                        <small class="form-text text-muted">Nu se va folosi in scopuri comerciale.</small>
+                    </div>
+
+                    <button type="button"
+                            id="addEditButton"
+                            style="margin-top:20px; margin-bottom: 30px;"
+                            class="btn btn-success primaryButton"
+                            onclick='addUser()'>Inserează</button>
+                </form>
+
+                <div id="alertclass">
+                    <div id="danger"
+                         class="alert alert-danger">
+                        <img src="IMG/attention.png"
+                             width="20px">
+                        <p>Something went wrong!</p>
+                    </div>
+                    <div id="success"
+                         class="alert alert-success">
+                        <img src="IMG/check_icon.png"
+                             width="25px">
+                        <p>Success!</p>
+                    </div>
+                </div>
+
+                <hr>
+            </div>
+            <div class="col-md-6">
+                <table class="table ">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Nume</th>
+                            <th scope="col">Email</th>
+                            <th scope="col">Funcție</th>
+                            <th scope="col"><img src="IMG/settings-icon.png"
+                                     height="20px"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="appendData">
+                        <!-- <tr>
+                            <th scope="row">1</th>
+                            <td>Sit</td>
+                            <td>
+                                Button trigger modal
+                                <button type="button"
+                                        class="btn specialButton"
+                                        onclick="ShowModal()">
+                                    Citește
+                                </button>
+                            </td>
+                            <td>Consectetur</td>
+                            <td>
+                                <img src="IMG/delete_icon.png"
+                                     width="20px"
+                                     style="margin-right: 20px; cursor: pointer"
+                                     alt="">
+                                <img src="IMG/edit_icon.png"
+                                     style=" cursor: pointer"
+                                     width="20px"
+                                     alt="">
+                            </td>
+                        </tr> -->
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        getAllUsers()
+    </script>
+</body>

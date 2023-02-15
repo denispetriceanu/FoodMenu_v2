@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible"
+          content="IE=edge">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Food Menu</title>
+
+    <!-- JQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD"
+          crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"
+            crossorigin="anonymous"></script>
+    <!-- CSS -->
+    <link rel="stylesheet"
+          href="CSS/style.css">
+
+    <style>
+        .form-group {
+            margin-top: 30px;
+        }
+
+        #img_login {
+            height: 100%;
+        }
+
+        .card {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+
+        <blockquote class="blockquote text-center"
+                    style="font-size: 30px; margin-top: 30px;">
+            <p class="mb-2">Welcome to Food Menu!</p>
+            <footer class="blockquote-footer"><cite title="Food Menu">Bun venit!</cite></footer>
+        </blockquote>
+
+        <div class="row"
+             style="margin-top: 50px;">
+            <div class="col-md-4 ">
+                <div class="card">
+                    <h4 style="margin-top: 10px;"
+                        class="text-center mb-0">Utilizatori</h4>
+                    <img class="mx-auto"
+                         src="IMG/waiter.png"
+                         alt="Product list"
+                         height="250px">
+                    <button class="mb-3 thirtyButton btn btn-secondary mx-auto"
+                            onclick="window.location.href='users'">Administrează</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <h4 style="margin-top: 10px;"
+                        class="text-center mb-0">Produse</h4>
+                    <img class="mx-auto"
+                         src="IMG/list_products.png"
+                         alt="Product list"
+                         height="250px">
+                    <button class="mb-3 primaryButton btn btn-success mx-auto"
+                            onclick="window.location.href='products'">Administrează</button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <h4 style="margin-top: 10px;"
+                        class="text-center mb-0">Comenzi</h4>
+                    <img class="mx-auto"
+                         src="IMG/orders.png"
+                         alt="Product list"
+                         height="250px">
+                    <button class="mb-3 secondaryButton btn btn-primary mx-auto"
+                            onclick="window.location.href='orders'">Administrează</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
