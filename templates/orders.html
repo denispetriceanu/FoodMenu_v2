@@ -22,24 +22,439 @@
     <!-- CSS -->
     <link rel="stylesheet"
           href="CSS/style.css">
+    <link rel="stylesheet"
+          href="CSS/modal.css">
+    <!-- JS -->
+    <script src="./JS/modal.js"></script>
 
     <style>
         .form-group {
-            margin-top: 30px;
+            margin-top: 20px;
         }
 
         #img_login {
             height: 100%;
         }
     </style>
+
+    <script>
+        let listOrder = [];
+        let listOrderReceived = [];
+
+        function updateTableOrder() {
+            let code = "";
+            for (let i = 0; i < listOrder.length; i++) {
+                code += "<tr><td>" + listOrder[i]["product_name"] + "</td><td>" + listOrder[i]["amount"] +
+                    "</td><td>" + listOrder[i]["price"] + "</td><td><img src='IMG/remove_image.png' onclick=removeFromList('"
+                    + listOrder[i]["product"] + "') width='30px' alt=''></td></tr >";
+            }
+            $('#tableOrderBody').html(code);
+        }
+
+        function checkIfExists(product_id) {
+            for (let i = 0; i < listOrder.length; i++)
+                if (listOrder[i]["product"] == product_id)
+                    return false;
+            return true;
+        }
+
+        function removeFromList(product_id) {
+            for (let i = 0; i < listOrder.length; i++) {
+                if (listOrder[i]["product"] == product_id) {
+                    listOrder.splice(i, 1);
+                    updateTableOrder();
+                }
+            }
+        }
+
+        function getPriceForProduct(product_id) {
+            $.ajax({
+                type: "GET",
+                url: "/getPriceProduct",
+                data: { "id": product_id },
+                success: function (data) {
+                    if (data != null) {
+                        let price = data["price"];
+                        listOrder[listOrder.length - 1]["price"] = price;
+                        updateTableOrder();
+                    } else console.log("Something web bad!");
+                },
+                error:
+                    function
+                        (errMsg) {
+                        console.log(errMsg);
+                    }
+            });
+        }
+
+        function createListOrder() {
+            let category = $("#category").val();
+            let product = $("#products").val();
+            let amount = $("#amount").val();
+            let produce_name = $("#products").text();
+            if (product.length != 0 && amount != "") {
+                if (checkIfExists(product)) {
+                    listOrder.push({
+                        category: category,
+                        product: product,
+                        product_name: produce_name,
+                        amount: amount,
+                        price: 0
+                    })
+                    getPriceForProduct(product);
+                } else {
+                    alert("Produsul exista deja!");
+                }
+            } else {
+                alert("Nu ai ales un produs valid sau cantitatea este prea mica!");
+            }
+
+            // reset
+            $("#amount").val("");
+        }
+
+        function getProductFromCategory(text) {
+            let htmlCode = "";
+            $.ajax({
+                type: "GET",
+                url: "/getProductsByCategory",
+                data: { "reference": text },
+                success: function (data) {
+                    if (data["childKey"] == null || data["childData"] == null) {
+                        htmlCode = "<tr><td></td><td style='font-size:12px'>Nici un utilizator</td><td></td><td></td><td></td></tr>";
+                    } else {
+                        let childKey = Object.values(data["childKey"]);
+                        let childValue = Object.values(data["childData"]);
+
+                        for (var i = 0; i < childKey.length; i++) {
+                            htmlCode += "<option value='" + childKey[i] + "'>" + childValue[i]["name"] + "</option>";
+                        }
+                    }
+                    $("#products").html(htmlCode);
+                },
+                error:
+                    function
+                        (errMsg) {
+                        console.log(errMsg);
+                    }
+            });
+        }
+
+        function totalPriceCalc() {
+            let price = 0;
+            for (let i = 0; i < listOrder.length; i++)
+                price += listOrder[i]["price"];
+            return price;
+        }
+
+        function addOrder() {
+            let waiter_name, table, product_list, time, total_price;
+            time = Date.now();
+            waiter_name = $("#name").val();
+            table = $("#table").val();
+            product_list = listOrder;
+            total_price = totalPriceCalc();
+            if (listOrder.length == 0) {
+                alert("Nu ati adaugat produse!");
+            } else
+                $.ajax({
+                    type: "POST",
+                    url: "/addOrder",
+                    data: { "time": time, "waiter_name": waiter_name, "table": table, "product_list": product_list, "total_price": total_price },
+                    success: function (data) {
+                        if (data["message"] == "true") {
+                            $("#success").text("Adaugat cu succes!")
+                            $("#success").css("display", "flex");
+                            setTimeout(() => {
+                                $("#success").css("display", "none");
+                            }, 2000)
+                            listOrder = [];
+                            updateTableOrder();
+                            getOrders();
+                            resetForms();
+                        } else {
+                            $("#danger").text("Eroare: " + data["message"])
+                            $("#danger").css("display", "flex");
+                            setTimeout(() => {
+                                $("#danger").css("display", "none");
+                            }, 3000)
+                        }
+                    },
+                    error: function (errMsg) {
+                        console.log(errMsg);
+                    }
+                });
+        }
+
+        // show in modal list of product for order
+        // id is the position in list: listOrderReceived
+        function showInfo(id) {
+            let tile = "Comanda conține:";
+            let description = "";
+            let temp = listOrderReceived[id]["data"];
+            for (let i = 0; i < temp.length; i++) {
+                description += "#" + (i + 1) + " <i>" + temp[i]["product_name"] + "</i>, în cantitate de: <b>"
+                    + temp[i]["amount"] + "</b> la pretul pe bucata de: <b>" + temp[i]["price"] + "</b> => Total: " + (parseInt(temp[i]["price"]) * parseInt(temp[i]["amount"])) + "<br><br>"
+            }
+
+            console.log(description);
+            ShowModal(tile, description);
+        }
+
+        function getOrders() {
+            let htmlCode = "";
+            $.ajax({
+                type: "GET",
+                url: "/getOrders",
+                data: { "reference": "Orders" },
+                success: function (data) {
+                    if (data["childKey"] == null || data["childData"] == null) {
+                        htmlCode = "<tr><td></td><td style='font-size:12px'>Nici un produs</td><td></td><td></td><td></td></tr>";
+                        console.log(htmlCode);
+                    } else {
+                        let childKey = Object.values(data["childKey"]);
+                        let childValue = Object.values(data["childData"]);
+                        for (var i = 0; i < childKey.length; i++) {
+                            listOrderReceived.push({ data: childValue[i]["product_list"] });
+                            htmlCode +=
+                                "<tr><td>" + (i + 1) + "</td><td>" + childValue[i]["table"] + "</td><td>" + childValue[i]["waiter_name"] +
+                                "</td><td><button class='btn btn-secondary thirtyButton' onclick=showInfo(`" + i + "`) style='font-size: 12px; width: 70px; padding: 0px;'>Comandă</button></td><td><img src='IMG/check_gray.png' style='cursor: pointer;' onclick=finishOrder('" + childKey[i] + "') width='30px'></td></tr>";
+                        }
+                    }
+                    $("#appendData").html(htmlCode);
+                },
+                error: function (errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+
+        function finishOrder(id) {
+            let text = "Finalizezi comanda?";
+            if (confirm(text) == true) {
+                $.ajax({
+                    type: "POST",
+                    url: "/finishOrder",
+                    data: { "id": id },
+                    success: function (data) {
+                        if (data["message"] == "true") {
+                            $("#success").text("Finalizat cu succes!")
+                            $("#success").css("display", "flex");
+                            setTimeout(() => {
+                                $("#success").css("display", "none");
+                            }, 2000)
+                            getOrders();
+                        } else {
+                            $("#danger").text("Eroare: " + data["message"])
+                            $("#danger").css("display", "flex");
+                            setTimeout(() => {
+                                $("#danger").css("display", "none");
+                            }, 3000)
+                        }
+                    },
+                    error: function (errMsg) {
+                        console.log(errMsg);
+                    }
+                });
+            }
+        }
+    </script>
 </head>
 
 <body>
     <div class="container">
-        Pagina unde se vor regasi comenzile utilizatorilor.
-        Optiune de bifare a comenzii si salvarea acesteia intr-un istoric.
+        <blockquote class="blockquote text-center"
+                    style="font-size: 30px; margin-top: 30px;">
+            <p class="mb-2">Welcome to Food Menu!</p>
+            <footer class="blockquote-footer"><cite title="Food Menu">Administrarea comenzilor</cite>
+            </footer>
+        </blockquote>
+
+
+        <div class="row"
+             style="margin-top: 30px">
+            <div class="col-md-6">
+                <h3>Adaugă comanda</h3>
+                <form>
+                    <div class="form-group">
+                        <label for="name">Numele chelnerului</label>
+                        <input type="text"
+                               class="form-control"
+                               id="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="table">Masa</label>
+                        <input type="text"
+                               class="form-control"
+                               id="table">
+                    </div>
+                    <div class="form-group">
+                        <label for="category">Categorie produs</label>
+                        <select class="form-select"
+                                id="category">
+                            <option selected>Alege o categorie</option>
+                            <option value="entrees">Entrees</option>
+                            <option value="mainDishes">Main dishes</option>
+                            <option value="desserts">Desserts</option>
+                            <option value="drinks">Drinks</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-9">
+                            <div class="form-group">
+                                <label for="products">Produs</label>
+                                <select class="form-select"
+                                        id="products">
+                                    <option selected>Alege o categorie mai intai</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="amount">Cantitate</label>
+                                <input type="number"
+                                       id="amount"
+                                       class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button"
+                            id="addProductInList"
+                            style="margin-top: 10px; padding: 0px"
+                            class="btn btn-primary secondaryButton"
+                            onclick='createListOrder()'>+ Adauga</button>
+
+                    <hr style="margin-top: 20px; margin-bottom: 0px;">
+                    <div id="placeForOrderedProduct">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover table-borderless table-sm border-danger">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Produs</th>
+                                        <th scope="col">Cant</th>
+                                        <th scope="col">Pret/buc</th>
+                                        <th scope="col"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableOrderBody">
+                                    <!-- <tr>
+                                        <td>Sit</td>
+                                        <td>Amet</td>
+                                        <td>Amet</td>
+                                        <td>
+                                            <img src="IMG/remove_image.png"
+                                                 width="30px"
+                                                 alt="">
+                                        </td>
+                                    </tr> -->
+                                </tbody>
+
+                            </table>
+                        </div>
+                    </div>
+                    <button type="button"
+                            id="addEditButton"
+                            style="margin-top:20px; margin-bottom: 30px;"
+                            class="btn btn-success primaryButton"
+                            onclick='addOrder()'>Inserează</button>
+                </form>
+
+                <div id="alertclass">
+                    <div id="danger"
+                         class="alert alert-danger">
+                        <img src="IMG/attention.png"
+                             width="20px">
+                        <p>Something went wrong!</p>
+                    </div>
+                    <div id="success"
+                         class="alert alert-success">
+                        <img src="IMG/check_icon.png"
+                             width="25px">
+                        <p>Success!</p>
+                    </div>
+                </div>
+
+                <hr>
+            </div>
+            <div class="col-md-6">
+                <table class="table ">
+                    <thead>
+                        <tr>
+                            <th scope="col">#</th>
+                            <th scope="col">Masa</th>
+                            <th scope="col">Chelner</th>
+                            <th scope="col">Informatii</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="appendData">
+                        <!-- <tr>
+                            <th scope="row">1</th>
+                            <td>Sit</td>
+                            <td>
+                                Button trigger modal
+                                <button type="button"
+                                        class="btn specialButton"
+                                        onclick="ShowModal()">
+                                    Citește
+                                </button>
+                            </td>
+                            <td>Consectetur</td>
+                            <td>
+                                <img src="IMG/delete_icon.png"
+                                     width="20px"
+                                     style="margin-right: 20px; cursor: pointer"
+                                     alt="">
+                                <img src="IMG/edit_icon.png"
+                                     style=" cursor: pointer"
+                                     width="20px"
+                                     alt="">
+                            </td>
+                        </tr> -->
+
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- The Modal -->
+    <div id="myModal"
+         class="modal">
+
+        <!-- Modal content -->
+        <div class="modal-content">
+            <span onclick="HideModal();"
+                  style="margin-left: auto; font-size:30px; margin-bottom: -40px; cursor: pointer; z-index: 100;">&times;</span>
+
+            <div class="modal-header">
+                <p id="modalTitle">Here will be the name</p>
+            </div>
+            <div class="modal-body">
+                <p id="modalDescription">Lorem ipsum, dolor sit amet consectetur adipisicing elit. Voluptatibus,
+                    perspiciatis laborum. Debitis velit, a fugit ullam placeat totam nam odio? Illo voluptatibus iure
+                    eum?
+                </p>
+            </div>
+            <div class="modal-footer"></div>
+            <span class="close"></span>
+        </div>
+
     </div>
 
 </body>
+<script>
+    getOrders();
+    // function which will get the product from category selected
+    $("#category").change(function () {
+        $("#category option:selected").each(function () {
+            let text = $(this).val();
+            if (text != "Alege o categorie")
+                getProductFromCategory(text);
+        });
+    }).change();
+
+</script>
 
 </html>

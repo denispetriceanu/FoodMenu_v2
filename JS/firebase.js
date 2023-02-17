@@ -3,9 +3,9 @@ const crypto = require("crypto");
 var serviceAccount = require("./foodmenu-v2-firebase-adminsdk-djehv-7d1bbe409d.json");
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL:
-    "https://foodmenu-v2-default-rtdb.europe-west1.firebasedatabase.app",
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL:
+        "https://foodmenu-v2-default-rtdb.europe-west1.firebasedatabase.app",
 });
 console.log("Firebase Environment setup success");
 
@@ -13,117 +13,153 @@ console.log("Firebase Environment setup success");
 var startReference = admin.database();
 
 const productOperations = {
-  addProduct(obj, res) {
-    const data = {
-      name: obj["name"],
-      description: obj["description"],
-      price: obj["price"],
-      time: obj["time"],
-      category: obj["category"],
-    };
-    startReference
-      .ref("FoodOptions")
-      .push(data)
-      .then(function () {
-        console.log("add success!");
-      });
-  },
+    addProduct(obj, res) {
+        const data = {
+            name: obj["name"],
+            description: obj["description"],
+            price: obj["price"],
+            time: obj["time"],
+            category: obj["category"],
+        };
+        startReference
+            .ref("FoodOptions")
+            .push(data)
+            .then(function () {
+                console.log("add success!");
+            });
+    },
 
-  editProduct(obj, res) {
-    id = obj["id"];
-    const data = {
-      name: obj["name"],
-      description: obj["description"],
-      price: obj["price"],
-      time: obj["time"],
-      category: obj["category"],
-    };
-    startReference
-      .ref("FoodOptions")
-      .child(id)
-      .update(data)
-      .then(function () {
-        console.log("Edit success!");
-      });
-  },
+    editProduct(obj, res) {
+        id = obj["id"];
+        const data = {
+            name: obj["name"],
+            description: obj["description"],
+            price: obj["price"],
+            time: obj["time"],
+            category: obj["category"],
+        };
+        startReference
+            .ref("FoodOptions")
+            .child(id)
+            .update(data)
+            .then(function () {
+                console.log("Edit success!");
+            });
+    },
 
-  deleteProduct(id) {
-    startReference
-      .ref("FoodOptions")
-      .child(id)
-      .remove()
-      .then(function () {
-        console.log("Remove succeeded.");
-      })
-      .catch(function (error) {
-        console.log("Remove failed: " + error.message);
-      });
-  },
+    deleteProduct(id) {
+        startReference
+            .ref("FoodOptions")
+            .child(id)
+            .remove()
+            .then(function () {
+                console.log("Remove succeeded.");
+            })
+            .catch(function (error) {
+                console.log("Remove failed: " + error.message);
+            });
+    },
 
-  returnDBObject(reference) {
-    return startReference.ref(reference);
-  },
+    returnDBObject(reference) {
+        return startReference.ref(reference);
+    },
 };
 
 const userOperations = {
-  addUser(obj, res) {
-    let hash = crypto.createHash("md5").update(obj["password"]).digest("hex");
-    console.log(obj["birthday"]);
-    const data = {
-      name: obj["name"],
-      email: obj["email"],
-      password: hash,
-      birthday: obj["birthday"],
-      time: obj["time"],
-      function: obj["function"],
-    };
-    startReference
-      .ref("Users")
-      .push(data)
-      .then(function () {
-        console.log("Add success!");
-      });
-  },
+    addUser(obj, res) {
+        let hash = crypto
+            .createHash("md5")
+            .update(obj["password"])
+            .digest("hex");
+        console.log(obj["birthday"]);
+        const data = {
+            name: obj["name"],
+            email: obj["email"],
+            password: hash,
+            birthday: obj["birthday"],
+            time: obj["time"],
+            function: obj["function"],
+        };
+        startReference
+            .ref("Users")
+            .push(data)
+            .then(function () {
+                console.log("Add success!");
+            });
+    },
 
-  editUser(obj, res) {
-    id = obj["id"];
+    editUser(obj, res) {
+        id = obj["id"];
 
-    const data = {
-      name: obj["name"],
-      email: obj["email"],
-      birthday: obj["birthday"],
-      time: obj["time"],
-      function: obj["function"],
-    };
-    startReference
-      .ref("Users")
-      .child(id)
-      .update(data)
-      .then(function () {
-        console.log("Edit success!");
-      });
-  },
+        const data = {
+            name: obj["name"],
+            email: obj["email"],
+            birthday: obj["birthday"],
+            time: obj["time"],
+            function: obj["function"],
+        };
+        startReference
+            .ref("Users")
+            .child(id)
+            .update(data)
+            .then(function () {
+                console.log("Edit success!");
+            });
+    },
 
-  deleteUser(id) {
-    startReference
-      .ref("Users")
-      .child(id)
-      .remove()
-      .then(function () {
-        console.log("Remove succeeded.");
-      })
-      .catch(function (error) {
-        console.log("Remove failed: " + error.message);
-      });
-  },
+    deleteUser(id) {
+        startReference
+            .ref("Users")
+            .child(id)
+            .remove()
+            .then(function () {
+                console.log("Remove succeeded.");
+            })
+            .catch(function (error) {
+                console.log("Remove failed: " + error.message);
+            });
+    },
 
-  returnDBObject(reference) {
-    return startReference.ref(reference);
-  },
+    returnDBObject(reference) {
+        return startReference.ref(reference);
+    },
+};
+
+const orderOperation = {
+    addOrder(obj, res) {
+        const data = {
+            waiter_name: obj["waiter_name"],
+            table: obj["table"],
+            product_list: obj["product_list"],
+            time: obj["time"],
+            total_price: obj["total_price"],
+        };
+        startReference
+            .ref("Orders")
+            .push(data)
+            .then(function () {
+                console.log("add success!");
+            });
+    },
+
+    finishOrder(id) {
+        // definirea referinței originale
+        const originalRef = startReference.ref("Orders");
+        // definirea referinței destinație
+        const destinationRef = startReference.ref("HistoryOrders");
+        // copierea datelor din locația originală în locația destinație
+        originalRef.child(id).once("value", function (snapshot) {
+            const data = snapshot.val();
+            destinationRef.child(id).set(data);
+            // ștergerea obiectului din locația originală
+            originalRef.child(id).remove();
+        });
+    },
 };
 
 // module.exports = returnDBObject;
 module.exports = {
-  productOperations,
-  userOperations,
+    productOperations,
+    userOperations,
+    orderOperation,
 };
