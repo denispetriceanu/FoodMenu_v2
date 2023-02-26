@@ -91,7 +91,7 @@ const userOperations = {
                         resolve("E-mailul exista deja.");
                     } else {
                         ref.push(data).then(function () {
-                            resolve("Add success!");
+                            resolve("true");
                         });
                     }
                 });
