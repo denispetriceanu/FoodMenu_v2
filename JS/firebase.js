@@ -1,6 +1,7 @@
 const admin = require("firebase-admin");
 const crypto = require("crypto");
 var serviceAccount = require("./foodmenu-v2-firebase-adminsdk-djehv-7d1bbe409d.json");
+const Promise = require("promise");
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
@@ -67,25 +68,34 @@ const productOperations = {
 
 const userOperations = {
     addUser(obj, res) {
-        let hash = crypto
-            .createHash("md5")
-            .update(obj["password"])
-            .digest("hex");
-        console.log(obj["birthday"]);
-        const data = {
-            name: obj["name"],
-            email: obj["email"],
-            password: hash,
-            birthday: obj["birthday"],
-            time: obj["time"],
-            function: obj["function"],
-        };
-        startReference
-            .ref("Users")
-            .push(data)
-            .then(function () {
-                console.log("Add success!");
-            });
+        return new Promise((resolve, reject) => {
+            let hash = crypto
+                .createHash("md5")
+                .update(obj["password"])
+                .digest("hex");
+
+            const data = {
+                name: obj["name"],
+                email: obj["email"],
+                password: hash,
+                birthday: obj["birthday"],
+                time: obj["time"],
+                function: obj["function"],
+            };
+
+            const ref = startReference.ref("Users");
+            ref.orderByChild("email")
+                .equalTo(data["email"])
+                .once("value", (snapshot) => {
+                    if (snapshot.exists()) {
+                        resolve("E-mailul exista deja.");
+                    } else {
+                        ref.push(data).then(function () {
+                            resolve("Add success!");
+                        });
+                    }
+                });
+        });
     },
 
     editUser(obj, res) {

@@ -3,6 +3,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const Promise = require("promise");
 
 const {
     userOperations,
@@ -146,11 +147,18 @@ route.get("/getOrders", (req, res) => {
 // User administration routes
 
 route.post("/addUser", (req, res) => {
+    // check if email does not exist
+    // ToDo: check if is correct values;
     if (req.body) {
-        // ToDo: check if is correct values;
         if (req.body["password"] == req.body["confirmPassword"]) {
-            userOperations.addUser(req.body, res);
-            res.send({ message: "true" });
+            userOperations
+                .addUser(req.body, res)
+                .then((results) => {
+                    res.send({ message: results });
+                })
+                .catch((err) => {
+                    res.send({ message: err });
+                });
         } else res.send({ message: "Parolele nu corespund!" });
     } else res.send({ message: "req.body is undefined" });
 });
