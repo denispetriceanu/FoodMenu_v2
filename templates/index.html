@@ -35,12 +35,58 @@
         .card {
             margin-bottom: 20px;
         }
+
+        #logoutBtn {
+            width: 80px;
+            position: sticky;
+            cursor: pointer;
+            left: 100%;
+            top: 10px;
+            z-index: 1;
+        }
     </style>
+    <script>
+        function logoutFunction() {
+            $.ajax({
+                type: "get",
+                url: "/out",
+                success: function (data) {
+                    if (data = "true") {
+                        alert("Dezautentificat cu success!");
+                        location.reload();
+                    } else {
+                        alert("Error: " + data);
+                    }
+                },
+                error: function (errMsg) {
+                    console.log(errMsg);
+                }
+            });
+        }
+
+
+    </script>
 </head>
 
 <body>
     <div class="container">
+        <div style="position: absolute; right: 10%; height: 100%;
+            top: 10%;">
+            <img src="IMG/logout_img.png"
+                 alt="out"
+                 id="logoutBtn"
+                 onclick="logoutFunction();">
+        </div>
 
+        <script>
+            if (document.cookie.indexOf('auth_token=') === -1) {
+                $('#logoutBtn').attr('src', 'IMG/image_auth_on.png');
+                $('#logoutBtn').attr('onclick', 'window.location.href = `/auth`;');
+            } else {
+                $('#logoutBtn').attr('src', 'IMG/logout_img.png');
+                $('#logoutBtn').attr('onclick', 'logoutFunction()');
+            }
+        </script>
         <blockquote class="blockquote text-center"
                     style="font-size: 30px; margin-top: 30px;">
             <p class="mb-2">Welcome to Food Menu!</p>
